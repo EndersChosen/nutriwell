@@ -66,6 +66,16 @@ struct FoodSearchView: View {
                             .foregroundStyle(.secondary)
                         Text("No results found")
                             .foregroundStyle(.secondary)
+                        if scannedBarcode != nil {
+                            Text("Barcode: \(searchText)")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .textSelection(.enabled)
+                            Text("This item may not be in the USDA database.\nTry searching by product name instead.")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .multilineTextAlignment(.center)
+                        }
                     }
                     Spacer()
                 } else if searchResults.isEmpty {

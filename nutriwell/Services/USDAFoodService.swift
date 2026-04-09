@@ -108,11 +108,12 @@ final class USDAFoodService {
     func searchByBarcode(_ barcode: String) async throws -> [USDAFood] {
         guard !barcode.isEmpty else { return [] }
 
+        // Try searching with gtinUpc filter first for exact match
         var components = URLComponents(string: "\(baseURL)/foods/search")!
         components.queryItems = [
             URLQueryItem(name: "api_key", value: apiKey),
             URLQueryItem(name: "query", value: barcode),
-            URLQueryItem(name: "pageSize", value: "5"),
+            URLQueryItem(name: "pageSize", value: "10"),
             URLQueryItem(name: "dataType", value: "Branded")
         ]
 
@@ -131,9 +132,18 @@ final class USDAFoodService {
         }
 
         let result = try JSONDecoder().decode(USDASearchResponse.self, from: data)
-        // Filter to exact barcode matches when possible
+
+        // Prefer exact UPC matches
         let exactMatches = result.foods.filter { $0.gtinUpc == barcode }
-        return exactMatches.isEmpty ? result.foods : exactMatches
+        if !exactMatches.isEmpty { return exactMatches }
+
+        // Try matching with leading zero stripped/added (UPC-A vs EAN-13)
+        let paddedBarcode = barcode.count == 12 ? "0" + barcode : barcode
+        let strippedBarcode = barcode.hasPrefix("0") ? String(barcode.dropFirst()) : barcode
+        let fuzzyMatches = result.foods.filter {
+            $0.gtinUpc == paddedBarcode || $0.gtinUpc == strippedBarcode
+        }
+        return fuzzyMatches.isEmpty ? result.foods : fuzzyMatches
     }
 }
 
