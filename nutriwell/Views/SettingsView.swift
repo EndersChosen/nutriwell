@@ -7,6 +7,7 @@ struct SettingsView: View {
 
     @State private var dailyPoints: String = ""
     @State private var userName: String = ""
+    @State private var showRMRCalculator = false
 
     private var profile: UserProfile? {
         profiles.first
@@ -60,7 +61,64 @@ struct SettingsView: View {
                     }
                 }
                 Section {
-                    Text("Points are calculated based on calories, saturated fat, sugar, protein, and fiber — similar to popular points-based diet systems.")
+                    Text("Points are calculated based on calories, saturated fat, sugar, and protein — similar to popular points-based diet systems.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section("Metabolism (RMR)") {
+                    if let rmr = profile?.rmr {
+                        HStack {
+                            Text("Resting Metabolic Rate")
+                            Spacer()
+                            Text("\(rmr) cal/day")
+                                .foregroundStyle(.green)
+                                .fontWeight(.semibold)
+                        }
+                        if let sex = profile?.sex, let age = profile?.age,
+                           let feet = profile?.heightFeet, let inches = profile?.heightInches {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(spacing: 12) {
+                                    Label(sex.capitalized, systemImage: "person.fill")
+                                    Label("\(age) yrs", systemImage: "calendar")
+                                    Label("\(feet)' \(inches)\"", systemImage: "ruler")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+                        Button {
+                            showRMRCalculator = true
+                        } label: {
+                            Label("Recalculate RMR", systemImage: "arrow.clockwise")
+                        }
+                        Button(role: .destructive) {
+                            clearRMR()
+                        } label: {
+                            Label("Remove RMR", systemImage: "xmark.circle")
+                        }
+                    } else {
+                        Button {
+                            showRMRCalculator = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "flame.fill")
+                                    .foregroundStyle(.orange)
+                                VStack(alignment: .leading) {
+                                    Text("Set Your RMR")
+                                        .font(.subheadline.bold())
+                                    Text("Enter directly or calculate from your stats")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Text("Your Resting Metabolic Rate is used for more accurate daily points calculation when you set a weight goal.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -97,6 +155,9 @@ struct SettingsView: View {
                     userName = profile.name
                 }
             }
+            .sheet(isPresented: $showRMRCalculator) {
+                RMRCalculatorView()
+            }
         }
     }
 
@@ -104,5 +165,14 @@ struct SettingsView: View {
         if let profile {
             update(profile)
         }
+    }
+
+    private func clearRMR() {
+        guard let profile else { return }
+        profile.rmr = nil
+        profile.heightFeet = nil
+        profile.heightInches = nil
+        profile.age = nil
+        profile.sex = nil
     }
 }

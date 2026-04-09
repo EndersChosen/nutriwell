@@ -11,12 +11,57 @@ struct GoalCalculator {
     private static let maxWeeklyLossLbs: Double = 2.0
     private static let minimumDailyPoints: Int = 18
 
-    /// Calculate the daily points budget based on current weight, goal, and timeline.
+    /// Activity multiplier applied to RMR to estimate TDEE (moderate activity).
+    private static let activityMultiplier: Double = 1.55
+
+    // MARK: - RMR Calculation
+
+    /// Calculate RMR using the Mifflin-St Jeor equation.
     /// - Parameters:
-    ///   - currentWeight: Current weight in lbs
-    ///   - goalWeight: Target weight in lbs
-    ///   - weeksRemaining: Weeks left to reach goal
-    /// - Returns: Recommended daily points budget
+    ///   - weightLbs: Weight in pounds
+    ///   - heightInches: Total height in inches
+    ///   - age: Age in years
+    ///   - isMale: true for male, false for female
+    /// - Returns: Resting Metabolic Rate in calories/day
+    static func calculateRMR(weightLbs: Double, heightInches: Double, age: Int, isMale: Bool) -> Int {
+        // RMR = (4.54 × weight in lbs) + (15.88 × height in inches) - (5 × age) - offset
+        // offset: 5 for men, 161 for women
+        let offset: Double = isMale ? 5.0 : 161.0
+        let rmr = (4.54 * weightLbs) + (15.88 * heightInches) - (5.0 * Double(age)) - offset
+        return max(800, Int(round(rmr)))
+    }
+
+    /// Convert feet + inches to total inches.
+    static func totalInches(feet: Int, inches: Int) -> Double {
+        Double(feet * 12 + inches)
+    }
+
+    // MARK: - Daily Points Calculation
+
+    /// Calculate daily points using RMR for accurate maintenance calories.
+    static func calculateDailyPoints(
+        currentWeight: Double,
+        goalWeight: Double,
+        weeksRemaining: Int,
+        rmr: Int
+    ) -> Int {
+        guard weeksRemaining > 0, currentWeight > goalWeight else {
+            return baselinePoints(forRMR: rmr)
+        }
+
+        let totalToLose = currentWeight - goalWeight
+        let weeklyLoss = min(totalToLose / Double(weeksRemaining), maxWeeklyLossLbs)
+        let dailyDeficit = (weeklyLoss * caloriesPerPound) / 7.0
+
+        // TDEE = RMR × activity multiplier
+        let maintenanceCalories = Double(rmr) * activityMultiplier
+        let targetCalories = maintenanceCalories - dailyDeficit
+
+        let points = Int(round(targetCalories / caloriesPerPoint))
+        return max(minimumDailyPoints, points)
+    }
+
+    /// Fallback: calculate daily points without RMR (uses ~15 cal/lb estimate).
     static func calculateDailyPoints(
         currentWeight: Double,
         goalWeight: Double,
@@ -28,24 +73,21 @@ struct GoalCalculator {
 
         let totalToLose = currentWeight - goalWeight
         let weeklyLoss = min(totalToLose / Double(weeksRemaining), maxWeeklyLossLbs)
-
-        // Daily calorie deficit needed
         let dailyDeficit = (weeklyLoss * caloriesPerPound) / 7.0
-
-        // Baseline maintenance calories (Mifflin-St Jeor rough estimate for moderate activity)
-        // Using a simplified formula: ~15 cal/lb for moderately active
         let maintenanceCalories = currentWeight * 15.0
-
-        // Target daily calories
         let targetCalories = maintenanceCalories - dailyDeficit
-
-        // Convert to points
         let points = Int(round(targetCalories / caloriesPerPoint))
 
         return max(minimumDailyPoints, points)
     }
 
-    /// Baseline maintenance points for a given weight (no deficit).
+    /// Baseline maintenance points using RMR.
+    static func baselinePoints(forRMR rmr: Int) -> Int {
+        let maintenanceCalories = Double(rmr) * activityMultiplier
+        return max(minimumDailyPoints, Int(round(maintenanceCalories / caloriesPerPoint)))
+    }
+
+    /// Baseline maintenance points for a given weight (no RMR available).
     static func baselinePoints(for weight: Double) -> Int {
         let maintenanceCalories = weight * 15.0
         return max(minimumDailyPoints, Int(round(maintenanceCalories / caloriesPerPoint)))

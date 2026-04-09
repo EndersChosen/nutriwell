@@ -28,6 +28,9 @@ struct WeightGoalView: View {
     private var previewPoints: Int? {
         guard let cw = currentWeightValue, let gw = goalWeightValue, let weeks = goalWeeksValue,
               isValid else { return nil }
+        if let rmr = profile?.rmr {
+            return GoalCalculator.calculateDailyPoints(currentWeight: cw, goalWeight: gw, weeksRemaining: weeks, rmr: rmr)
+        }
         return GoalCalculator.calculateDailyPoints(currentWeight: cw, goalWeight: gw, weeksRemaining: weeks)
     }
 
@@ -197,9 +200,15 @@ struct WeightGoalView: View {
         profile.goalStartDate = Date()
         profile.lastRecalcDate = Date()
         profile.useGoalBasedPoints = true
-        profile.dailyPointsBudget = GoalCalculator.calculateDailyPoints(
-            currentWeight: cw, goalWeight: gw, weeksRemaining: weeks
-        )
+        if let rmr = profile.rmr {
+            profile.dailyPointsBudget = GoalCalculator.calculateDailyPoints(
+                currentWeight: cw, goalWeight: gw, weeksRemaining: weeks, rmr: rmr
+            )
+        } else {
+            profile.dailyPointsBudget = GoalCalculator.calculateDailyPoints(
+                currentWeight: cw, goalWeight: gw, weeksRemaining: weeks
+            )
+        }
 
         // Also log the current weight if no entry exists today
         let today = Date()

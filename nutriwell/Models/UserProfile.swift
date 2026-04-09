@@ -14,6 +14,13 @@ final class UserProfile {
     var lastRecalcDate: Date?
     var useGoalBasedPoints: Bool
 
+    // RMR / body stats
+    var rmr: Int?
+    var heightFeet: Int?
+    var heightInches: Int?
+    var age: Int?
+    var sex: String?  // "male" or "female"
+
     init(name: String = "", dailyPointsBudget: Int = 40) {
         self.name = name
         self.dailyPointsBudget = dailyPointsBudget

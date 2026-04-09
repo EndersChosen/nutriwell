@@ -223,14 +223,24 @@ struct WeightTrackingView: View {
         // Already at or below goal
         if newWeight <= goalWeight {
             profile.useGoalBasedPoints = false
-            profile.dailyPointsBudget = GoalCalculator.baselinePoints(for: newWeight)
+            if let rmr = profile.rmr {
+                profile.dailyPointsBudget = GoalCalculator.baselinePoints(forRMR: rmr)
+            } else {
+                profile.dailyPointsBudget = GoalCalculator.baselinePoints(for: newWeight)
+            }
             return
         }
 
         let weeksLeft = GoalCalculator.weeksRemaining(startDate: goalStart, totalWeeks: totalWeeks)
-        profile.dailyPointsBudget = GoalCalculator.calculateDailyPoints(
-            currentWeight: newWeight, goalWeight: goalWeight, weeksRemaining: weeksLeft
-        )
+        if let rmr = profile.rmr {
+            profile.dailyPointsBudget = GoalCalculator.calculateDailyPoints(
+                currentWeight: newWeight, goalWeight: goalWeight, weeksRemaining: weeksLeft, rmr: rmr
+            )
+        } else {
+            profile.dailyPointsBudget = GoalCalculator.calculateDailyPoints(
+                currentWeight: newWeight, goalWeight: goalWeight, weeksRemaining: weeksLeft
+            )
+        }
         profile.lastRecalcDate = Date()
     }
 
