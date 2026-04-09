@@ -65,9 +65,7 @@ struct USDANutrient: Codable {
 final class USDAFoodService {
     static let shared = USDAFoodService()
 
-    // Free USDA API key — users should register at https://fdc.nal.usda.gov/api-key-signup
-    // and replace this with their own key.
-    private let apiKey = "DEMO_KEY"
+    private let apiKey = "REDACTED_API_KEY"
     private let baseURL = "https://api.nal.usda.gov/fdc/v1"
 
     private let session: URLSession = {
