@@ -118,20 +118,31 @@ struct DailySummaryHeader: View {
     }
 
     private var motivationalMessage: String {
-        if remainingPoints <= 0 {
-            return "You've used all your points today!"
-        } else if remainingPoints < budget / 4 {
-            return "Almost at your limit \u{2014} choose wisely!"
-        } else if steps >= 10000 {
-            return "Amazing step count! Keep it up! \u{1F525}"
-        } else if activeCalories >= 300 {
-            return "Great calorie burn today! \u{1F4AA}"
-        } else if exerciseMinutes >= 30 {
-            return "Solid workout today! \u{1F3C6}"
-        } else {
-            return "Let's make it a great day!"
-        }
+        healthJokes.randomElement() ?? "Stay healthy!"
     }
+
+    private let healthJokes = [
+        "I told my trainer I wanted to touch my toes. She said, \"Which ones?\" \u{1F602}",
+        "I don't need a personal trainer… I need someone to follow me around and slap unhealthy food out of my hands. \u{1F354}",
+        "My favorite exercise is a cross between a lunge and a crunch. I call it lunch. \u{1F96A}",
+        "I went to the gym and asked the trainer, \"Can you teach me to do the splits?\" He said, \"How flexible are you?\" I said, \"I can't make Tuesdays.\" \u{1F3CB}",
+        "I don't sweat — I sparkle. \u{2728}",
+        "Running late counts as cardio, right? \u{1F3C3}",
+        "They say laughter is the best medicine. So technically, this app is a health product. \u{1F48A}",
+        "I do 5 sit-ups every morning. It might not sound like much, but there are only so many times you can hit the snooze button. \u{23F0}",
+        "Ate a salad today. It was on a pizza, but still. \u{1F355}",
+        "My doctor told me to watch my calories. So now I eat in front of the TV. \u{1F4FA}",
+        "I've been on a diet for two weeks and all I've lost is 14 days. \u{1F4C5}",
+        "Does refusing to take the elevator count as a workout? \u{1FA9C}",
+        "The only marathon I'm running is a Netflix marathon. \u{1F3AC}",
+        "I tried yoga once. The instructor said \"Namaste\" and I said \"Nah, Imma leave.\" \u{1F9D8}",
+        "My gym routine: 1% working out, 99% wondering why I'm there. \u{1F914}",
+        "I recently started jogging. The ice cream truck was pulling away. \u{1F366}",
+        "An apple a day keeps anyone away if you throw it hard enough. \u{1F34E}",
+        "My six-pack is protected by a layer of fat. Safety first. \u{1F6E1}",
+        "I walk because punching people is frowned upon. \u{1F6B6}",
+        "Water is the healthiest drink. It goes with pizza, burgers, and cake. \u{1F4A7}",
+    ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
