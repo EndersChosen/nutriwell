@@ -78,11 +78,6 @@ struct SettingsView: View {
                 if let profile {
                     dailyPoints = "\(profile.dailyPointsBudget)"
                     userName = profile.name
-                } else {
-                    // Create default profile
-                    let newProfile = UserProfile()
-                    modelContext.insert(newProfile)
-                    dailyPoints = "\(newProfile.dailyPointsBudget)"
                 }
             }
         }

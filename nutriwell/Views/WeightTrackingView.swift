@@ -5,8 +5,8 @@ struct WeightTrackingView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WeightEntry.date, order: .reverse) private var weightEntries: [WeightEntry]
 
-    @State private var showAddWeight = false
     @State private var newWeight = ""
+    @FocusState private var isWeightFieldFocused: Bool
 
     private var latestWeight: Double? {
         weightEntries.first?.weight
@@ -53,6 +53,7 @@ struct WeightTrackingView: View {
                     HStack {
                         TextField("Weight (lbs)", text: $newWeight)
                             .keyboardType(.decimalPad)
+                            .focused($isWeightFieldFocused)
                         Button("Add") {
                             addWeight()
                         }
@@ -79,6 +80,14 @@ struct WeightTrackingView: View {
                 }
             }
             .navigationTitle("Weight")
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        isWeightFieldFocused = false
+                    }
+                }
+            }
         }
     }
 
@@ -87,6 +96,7 @@ struct WeightTrackingView: View {
         let entry = WeightEntry(weight: weight)
         modelContext.insert(entry)
         newWeight = ""
+        isWeightFieldFocused = false
     }
 
     private func deleteEntries(at offsets: IndexSet) {

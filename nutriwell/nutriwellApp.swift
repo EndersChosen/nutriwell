@@ -28,7 +28,19 @@ struct nutriwellApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    ensureProfileExists()
+                }
         }
         .modelContainer(sharedModelContainer)
+    }
+
+    private func ensureProfileExists() {
+        let context = sharedModelContainer.mainContext
+        let descriptor = FetchDescriptor<UserProfile>()
+        let count = (try? context.fetchCount(descriptor)) ?? 0
+        if count == 0 {
+            context.insert(UserProfile())
+        }
     }
 }
