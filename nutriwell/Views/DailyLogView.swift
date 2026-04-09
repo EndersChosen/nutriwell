@@ -5,6 +5,7 @@ struct DailyLogView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
+    @State private var healthService = HealthKitService.shared
 
     @State private var selectedDate = Date()
     @State private var showAddFood = false
@@ -38,6 +39,17 @@ struct DailyLogView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    // Daily summary header
+                    DailySummaryHeader(
+                        userName: profiles.first?.name ?? "",
+                        remainingPoints: remainingPoints,
+                        budget: dailyBudget,
+                        steps: healthService.stepCount,
+                        activeCalories: healthService.activeCalories,
+                        exerciseMinutes: healthService.exerciseMinutes
+                    )
+                    .padding(.horizontal)
+
                     // Date selector
                     DateSelector(selectedDate: $selectedDate)
 
@@ -68,8 +80,99 @@ struct DailyLogView: View {
                 .padding(.bottom, 20)
             }
             .navigationTitle("NutriWell")
+            .navigationBarTitleDisplayMode(.inline)
+            .task {
+                if healthService.isAuthorized {
+                    await healthService.refreshAllData()
+                }
+            }
             .sheet(isPresented: $showAddFood) {
                 FoodSearchView(mealType: selectedMealType, date: selectedDate)
+            }
+        }
+    }
+}
+
+// MARK: - Daily Summary Header
+
+struct DailySummaryHeader: View {
+    let userName: String
+    let remainingPoints: Int
+    let budget: Int
+    let steps: Int
+    let activeCalories: Int
+    let exerciseMinutes: Int
+
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 0..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        default: return "Good evening"
+        }
+    }
+
+    private var displayName: String {
+        if userName.isEmpty { return "" }
+        return ", \(userName)"
+    }
+
+    private var motivationalMessage: String {
+        if remainingPoints <= 0 {
+            return "You've used all your points today!"
+        } else if remainingPoints < budget / 4 {
+            return "Almost at your limit \u{2014} choose wisely!"
+        } else if steps >= 10000 {
+            return "Amazing step count! Keep it up! \u{1F525}"
+        } else if activeCalories >= 300 {
+            return "Great calorie burn today! \u{1F4AA}"
+        } else if exerciseMinutes >= 30 {
+            return "Solid workout today! \u{1F3C6}"
+        } else {
+            return "Let's make it a great day!"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("\(greeting)\(displayName)")
+                .font(.title2.bold())
+
+            Text(motivationalMessage)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            if steps > 0 || activeCalories > 0 || exerciseMinutes > 0 {
+                HStack(spacing: 16) {
+                    ActivityPill(icon: "figure.walk", value: steps.formatted(), label: "steps")
+                    ActivityPill(icon: "flame.fill", value: activeCalories.formatted(), label: "cal")
+                    ActivityPill(icon: "timer", value: "\(exerciseMinutes)", label: "min")
+                }
+                .padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+private struct ActivityPill: View {
+    let icon: String
+    let value: String
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(.green)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .font(.caption.bold())
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
     }
