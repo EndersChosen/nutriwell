@@ -28,18 +28,35 @@ struct SettingsView: View {
                 }
 
                 Section("Daily Points Budget") {
-                    HStack {
-                        Text("Points per day")
-                        Spacer()
-                        TextField("40", text: $dailyPoints)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 60)
-                            .onChange(of: dailyPoints) { _, newValue in
-                                if let points = Int(newValue), points > 0, points <= 200 {
-                                    updateProfile { $0.dailyPointsBudget = points }
+                    if profile?.useGoalBasedPoints == true {
+                        HStack {
+                            Text("Points per day")
+                            Spacer()
+                            Text("\(profile?.dailyPointsBudget ?? 40)")
+                                .foregroundStyle(.green)
+                                .fontWeight(.semibold)
+                        }
+                        HStack {
+                            Image(systemName: "target")
+                                .foregroundStyle(.green)
+                            Text("Auto-managed by your weight goal")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        HStack {
+                            Text("Points per day")
+                            Spacer()
+                            TextField("40", text: $dailyPoints)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 60)
+                                .onChange(of: dailyPoints) { _, newValue in
+                                    if let points = Int(newValue), points > 0, points <= 200 {
+                                        updateProfile { $0.dailyPointsBudget = points }
+                                    }
                                 }
-                            }
+                        }
                     }
                 }
                 Section {
