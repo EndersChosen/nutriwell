@@ -9,7 +9,7 @@ struct FoodSearchView: View {
     let date: Date
 
     @State private var searchText = ""
-    @State private var searchResults: [USDAFood] = []
+    @State private var searchResults: [FoodResult] = []
     @State private var isSearching = false
     @State private var errorMessage: String?
     @State private var showScanner = false
@@ -71,7 +71,7 @@ struct FoodSearchView: View {
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                                 .textSelection(.enabled)
-                            Text("This item may not be in the USDA database.\nTry searching by product name instead.")
+                            Text("This item wasn't found in any database.\nTry searching by product name instead.")
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                                 .multilineTextAlignment(.center)
@@ -123,14 +123,16 @@ struct FoodSearchView: View {
 
         Task {
             do {
-                let results = try await USDAFoodService.shared.searchFoods(query: searchText)
+                // Search both sources in parallel
+                async let offResults = OpenFoodFactsService.shared.searchFoods(query: searchText, pageSize: 15)
+                async let usdaResults = USDAFoodService.shared.searchFoods(query: searchText, pageSize: 15)
+
+                let off = (try? await offResults) ?? []
+                let usda = (try? await usdaResults).map { $0.map(FoodResult.from(usdaFood:)) } ?? []
+
                 await MainActor.run {
-                    searchResults = results
-                    isSearching = false
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
+                    // OFF results first, then USDA
+                    searchResults = off + usda
                     isSearching = false
                 }
             }
@@ -142,10 +144,20 @@ struct FoodSearchView: View {
         errorMessage = nil
 
         Task {
-            do {
-                let results = try await USDAFoodService.shared.searchByBarcode(barcode)
+            // Try Open Food Facts first (best barcode coverage)
+            if let offResult = try? await OpenFoodFactsService.shared.fetchByBarcode(barcode) {
                 await MainActor.run {
-                    searchResults = results
+                    searchResults = [offResult]
+                    isSearching = false
+                }
+                return
+            }
+
+            // Fall back to USDA
+            do {
+                let usdaResults = try await USDAFoodService.shared.searchByBarcode(barcode)
+                await MainActor.run {
+                    searchResults = usdaResults.map(FoodResult.from(usdaFood:))
                     isSearching = false
                 }
             } catch {
@@ -157,11 +169,11 @@ struct FoodSearchView: View {
         }
     }
 
-    private func addFoodEntry(_ food: USDAFood) {
+    private func addFoodEntry(_ food: FoodResult) {
         let entry = FoodEntry(
-            name: food.description,
-            brand: food.displayBrand,
-            barcode: food.gtinUpc,
+            name: food.name,
+            brand: food.brand,
+            barcode: food.barcode,
             calories: food.calories,
             protein: food.protein,
             carbs: food.carbs,
@@ -170,10 +182,10 @@ struct FoodSearchView: View {
             saturatedFat: food.saturatedFat,
             sugar: food.sugar,
             points: food.points,
-            servingSize: food.servingDescription,
+            servingSize: food.servingSize,
             mealType: mealType,
             date: date,
-            fdcId: "\(food.fdcId)"
+            fdcId: food.id
         )
         modelContext.insert(entry)
         dismiss()
@@ -181,25 +193,25 @@ struct FoodSearchView: View {
 }
 
 struct FoodResultRow: View {
-    let food: USDAFood
+    let food: FoodResult
     let onAdd: () -> Void
 
     var body: some View {
         Button(action: onAdd) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(food.description.capitalized)
+                    Text(food.name.capitalized)
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.primary)
                         .lineLimit(2)
-                    if !food.displayBrand.isEmpty {
-                        Text(food.displayBrand)
+                    if !food.brand.isEmpty {
+                        Text(food.brand)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     HStack(spacing: 12) {
                         Label("\(Int(food.calories)) cal", systemImage: "flame.fill")
-                        Label(food.servingDescription, systemImage: "scalemass")
+                        Label(food.servingSize, systemImage: "scalemass")
                     }
                     .font(.caption2)
                     .foregroundStyle(.secondary)
