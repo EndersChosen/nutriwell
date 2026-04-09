@@ -1,7 +1,8 @@
 import Foundation
 
-/// Calculates Weight-Watchers-style points from nutritional info.
-/// Formula: points = (calories / 50) + (saturatedFat / 4) + (sugar / 9) - (protein / 10) - (fiber / 4)
+/// Calculates points using WW SmartPoints-style coefficients.
+/// Calories, saturated fat, and sugar increase points.
+/// Protein decreases points (capped so high-protein items don't zero out).
 /// Minimum is 0 points.
 struct PointsCalculator {
     static func calculate(
@@ -11,11 +12,13 @@ struct PointsCalculator {
         protein: Double,
         fiber: Double
     ) -> Int {
-        let raw = (calories / 50.0)
-            + (saturatedFat / 4.0)
-            + (sugar / 9.0)
-            - (protein / 10.0)
-            - (min(fiber, 4.0) / 4.0)
+        // SmartPoints-style coefficients
+        let caloriePart = calories * 0.0305
+        let satFatPart = saturatedFat * 0.275
+        let sugarPart = sugar * 0.12
+        let proteinPart = protein * 0.098
+
+        let raw = caloriePart + satFatPart + sugarPart - proteinPart
         return max(0, Int(round(raw)))
     }
 }
