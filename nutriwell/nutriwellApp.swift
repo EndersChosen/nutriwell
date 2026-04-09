@@ -21,7 +21,20 @@ struct nutriwellApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // Schema changed — delete old store and retry
+            let url = modelConfiguration.url
+            try? FileManager.default.removeItem(at: url)
+            // Also remove journal/wal files
+            let walURL = url.appendingPathExtension("wal")
+            let shmURL = url.appendingPathExtension("shm")
+            try? FileManager.default.removeItem(at: walURL)
+            try? FileManager.default.removeItem(at: shmURL)
+
+            do {
+                return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            } catch {
+                fatalError("Could not create ModelContainer: \(error)")
+            }
         }
     }()
 

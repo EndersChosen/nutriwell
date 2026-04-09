@@ -33,6 +33,7 @@ final class FoodEntry {
     var sugar: Double
     var points: Int
     var servingSize: String
+    var numberOfServings: Double
     var mealType: MealType
     var date: Date
     var fdcId: String?
@@ -50,6 +51,7 @@ final class FoodEntry {
         sugar: Double = 0,
         points: Int = 0,
         servingSize: String = "",
+        numberOfServings: Double = 1.0,
         mealType: MealType = .breakfast,
         date: Date = Date(),
         fdcId: String? = nil
@@ -66,6 +68,7 @@ final class FoodEntry {
         self.sugar = sugar
         self.points = points
         self.servingSize = servingSize
+        self.numberOfServings = numberOfServings
         self.mealType = mealType
         self.date = date
         self.fdcId = fdcId

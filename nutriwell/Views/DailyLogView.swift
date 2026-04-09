@@ -381,7 +381,11 @@ struct FoodEntryRow: View {
                         Text(entry.brand)
                     }
                     Text("\(Int(entry.calories)) cal")
-                    Text(entry.servingSize)
+                    if entry.numberOfServings != 1.0 {
+                        Text("\(entry.numberOfServings, specifier: "%.1g")× \(entry.servingSize)")
+                    } else {
+                        Text(entry.servingSize)
+                    }
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)

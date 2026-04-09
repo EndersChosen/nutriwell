@@ -14,6 +14,8 @@ struct FoodSearchView: View {
     @State private var errorMessage: String?
     @State private var showScanner = false
     @State private var scannedBarcode: String?
+    @State private var selectedFood: FoodResult?
+    @State private var showReview = false
 
     var body: some View {
         NavigationStack {
@@ -91,7 +93,8 @@ struct FoodSearchView: View {
                 } else {
                     List(searchResults) { food in
                         FoodResultRow(food: food) {
-                            addFoodEntry(food)
+                            selectedFood = food
+                            showReview = true
                         }
                     }
                     .listStyle(.plain)
@@ -106,6 +109,13 @@ struct FoodSearchView: View {
             }
             .sheet(isPresented: $showScanner) {
                 BarcodeScannerView(scannedCode: $scannedBarcode)
+            }
+            .sheet(isPresented: $showReview) {
+                if let food = selectedFood {
+                    FoodReviewView(food: food, mealType: mealType, date: date) {
+                        dismiss()
+                    }
+                }
             }
             .onChange(of: scannedBarcode) { _, newValue in
                 if let barcode = newValue {
@@ -169,27 +179,7 @@ struct FoodSearchView: View {
         }
     }
 
-    private func addFoodEntry(_ food: FoodResult) {
-        let entry = FoodEntry(
-            name: food.name,
-            brand: food.brand,
-            barcode: food.barcode,
-            calories: food.calories,
-            protein: food.protein,
-            carbs: food.carbs,
-            fat: food.fat,
-            fiber: food.fiber,
-            saturatedFat: food.saturatedFat,
-            sugar: food.sugar,
-            points: food.points,
-            servingSize: food.servingSize,
-            mealType: mealType,
-            date: date,
-            fdcId: food.id
-        )
-        modelContext.insert(entry)
-        dismiss()
-    }
+
 }
 
 struct FoodResultRow: View {
