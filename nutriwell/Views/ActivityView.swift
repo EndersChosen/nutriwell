@@ -300,7 +300,8 @@ private struct WorkoutRow: View {
                 Text(formattedDuration)
                     .font(.subheadline.bold())
 
-                if let calories = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) {
+                if let caloriesType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned),
+                   let calories = workout.statistics(for: caloriesType)?.sumQuantity()?.doubleValue(for: .kilocalorie()) {
                     Text("\(Int(calories)) cal")
                         .font(.caption)
                         .foregroundStyle(.orange)
