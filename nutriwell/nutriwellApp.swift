@@ -12,7 +12,9 @@ import SwiftData
 struct nutriwellApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            FoodEntry.self,
+            WeightEntry.self,
+            UserProfile.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
