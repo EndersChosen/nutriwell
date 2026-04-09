@@ -65,7 +65,7 @@ struct USDANutrient: Codable {
 final class USDAFoodService {
     static let shared = USDAFoodService()
 
-    private let apiKey = "REDACTED_API_KEY"
+    private let apiKey = APIKeys.usdaFoodData
     private let baseURL = "https://api.nal.usda.gov/fdc/v1"
 
     private let session: URLSession = {
